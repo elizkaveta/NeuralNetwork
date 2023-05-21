@@ -19,7 +19,6 @@ public:
                                const Vector& predicted_y) = 0;
     virtual Vector GetDerivative(const Vector& expected_y,
                                  const Vector& predicted_y) = 0;
-    virtual ~BaseLossFunction() = default;
 };
 
 class MSE : public BaseLossFunction {

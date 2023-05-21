@@ -28,7 +28,6 @@ class LinearLayer {
 public:
     Matrix a_;
     Vector b_;
-
     LinearLayer(size_t n, size_t m) : a_(Matrix::Random(m, n)), b_(Vector::Random(m)) {
     }
 };
@@ -47,27 +46,31 @@ concept IsLossFunction = requires(T a, Vector y1, Vector y2) {
 
 class Sequential {
 public:
-    Sequential(const std::initializer_list<LinearLayer>& layers) : layers(layers) {
-    }
-    std::initializer_list<LinearLayer> layers;
-};
+    Sequential(std::initializer_list<LinearLayer> linear_layers,
+               std::vector<std::unique_ptr<ActivationFunction>> activation_functions)
+        : linear_layers(linear_layers), activation_functions(std::move(activation_functions)) {}
 
-
-template<IsLossFunction LossFunctionTemplate>
-class Model {
-public:
-
-    void Train(size_t epoch) {
-
+    void print_activation_functions() const {
+        for (size_t i = 0; i < activation_functions.size(); i++) {
+            std::cout << "Function " << i << " type: " << typeid(*activation_functions[i]).name() << std::endl;
+        }
     }
 
 private:
-    std::vector<std::unique_ptr<ActivationFunction> > activation_functions;
-    LossFunctionTemplate loss_function;
-    Sequential sequential;
-    double min_loss;
-    size_t batch_size;
-    std::initializer_list<Vector> results;
+    std::vector<LinearLayer> linear_layers;
+    std::vector<std::unique_ptr<ActivationFunction>> activation_functions;
+};
+
+class Model {
+public:
+    Model(Sequential seq) : sequential_(std::move(seq)) {}
+
+    void print_activation_functions() const {
+        sequential_.print_activation_functions();
+    }
+
+private:
+    Sequential sequential_;
 };
 
 }

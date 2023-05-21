@@ -10,7 +10,18 @@ using Matrix = Eigen::MatrixXd;
 using Vector = Eigen::VectorXd;
 using namespace NeuralNetwork;
 int main() {
-    LinearLayer b(1, 1);
-    std::vector<LinearLayer> c(1, b);
-    Model model(Sequential({{1,2}}), {Sigmoid(), ReLu()}, MSE(), 0.1);
+    std::vector<std::unique_ptr<ActivationFunction>> activation_functions;
+
+    activation_functions.push_back(std::make_unique<Sigmoid>());
+    activation_functions.push_back(std::make_unique<ReLu>());
+    activation_functions.push_back(std::make_unique<Sigmoid>());
+
+    Sequential sequential({{1, 2}}, std::move(activation_functions));
+    Model model(std::move(sequential));
+    model.print_activation_functions();
+
+
+    // Выводит информацию о добавленных функциях активации
+    return 0;
+
 }
