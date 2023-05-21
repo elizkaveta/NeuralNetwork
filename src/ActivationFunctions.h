@@ -20,22 +20,24 @@ using Matrix = Eigen::MatrixXd;
 using Vector = Eigen::VectorXd;
 
 class ActivationFunction {
+    virtual Vector Compute(const Vector& x) = 0;
+    virtual Matrix GetDerivative(const Vector& x) = 0;
 };
 
 class Sigmoid final : public ActivationFunction {
 public:
-    static Vector Compute(const Vector& x) {
+    Vector Compute(const Vector& x) override {
         return x.array().exp() / (1 + x.array().exp());
     }
-    static Matrix GetDerivative(const Vector& x) {
+    Matrix GetDerivative(const Vector& x) override {
         return ((-x.array()).exp() / pow(1.0 + (-x.array()).exp(), 2)).matrix().asDiagonal();
     }
 };
 
 class ReLu final : public ActivationFunction {
 public:
-    static Vector Compute(const Vector& x) { return x.cwiseMax(0.0); }
-    static Matrix GetDerivative(const Vector& x) {
+    Vector Compute(const Vector& x) override { return x.cwiseMax(0.0); }
+    Matrix GetDerivative(const Vector& x) override {
         return (x.array() > 0.0).cast<double>().matrix().asDiagonal();
     }
 };
