@@ -33,11 +33,17 @@ public:
 
 class Sequential {
 public:
-    Sequential(std::initializer_list<LinearLayer> linear_layers_t,
+    Sequential(std::initializer_list<size_t> dimensions,
                std::vector<std::unique_ptr<ActivationFunction>> activation_functions_t)
-        : linear_layers(linear_layers_t), activation_functions(std::move(activation_functions_t)) {
-        assert((linear_layers.size() == activation_functions.size()));
-        number_of_layers = linear_layers.size();
+        : activation_functions(std::move(activation_functions_t)) {
+        assert((dimensions.size() == activation_functions.size() + 1));
+
+        linear_layers.reserve(activation_functions.size());
+
+        for (auto it = dimensions.begin(); it + 1 != dimensions.end(); ++it) {
+            linear_layers.emplace_back(*(it + 1), *(it));
+        }
+        number_of_layers = activation_functions.size();
         da.resize(number_of_layers);
         db.resize(number_of_layers);
         for (size_t i = 0; i < number_of_layers; ++i) {
@@ -86,54 +92,54 @@ public:
             answer[i] = DataLoader::ConvertInt(i);
         }
     }
-    void Train(DataLoader& data_loader, size_t epoch = 1) {
-
+    void Train(DataLoader& data_loader, size_t epoch = 3) {
         for (size_t i = 0; i < epoch; ++i) {
+            printf("epoch: %zu / %zu\n", i + 1, epoch);
+            fflush(stdout);
             Reset();
-            int cnt = 0;
             Batch batch = data_loader.Next();
-            /*for (auto vec : batch) {
-                for (auto u : vec.first) {
-                    // std::cout << u << " ";
-                }
-                // std::cout << std::endl;
-            }
-            // std::cout << std::endl;*/
+            int cnt = 0;
             while (!batch.empty()) {
                 Conversion(batch);
                 BackPropogate(batch);
-                cnt++;
                 batch = data_loader.Next();
+                cnt++;
             }
-            // std::cout << cnt << std::endl;
             Step(learning_rate, data_loader.batch_size);
             data_loader.Reset();
         }
     }
     int Predict(Batch batch) {
+        g = 1;
         Conversion(batch);
         int count_right = 0;
         for (auto& x_y : batch) {
             int ans = 0;
-            double loss_min = 1e9;
+            double similar_max = -1e9;
             for (int i = 0; i < 10; ++i) {
-                double loss = loss_function->Compute(answer[i], x_y.first);
-                if (loss < loss_min) {
+                if (x_y.first[i] > similar_max) {
                     ans = i;
-                    loss_min = loss;
+                    similar_max = x_y.first[i];
                 }
             }
             if (DataLoader::ConvertVector(x_y.second) == ans) {
+
                 ++count_right;
             }
         }
         return count_right;
     }
+    int g = 0;
 private:
     void Conversion(Batch& batch) {
         for (size_t j = 0; j < batch.size(); ++j) {
             for (size_t i = 0; i < sequential.number_of_layers; ++i) {
                 batch[j].first = sequential.Compute(batch[j].first, i);
+//                std::cout << "batch " << j << ":\n";
+//                for (int k = 0; k < batch[j].first.size(); k++) {
+//                    std::cout << batch[j].first[k] << " ";
+//                }
+//                std::cout << std::endl;
             }
         }
     }
