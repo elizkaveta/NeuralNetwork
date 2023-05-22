@@ -15,9 +15,9 @@ int main() {
     activation_functions.push_back(std::make_unique<Sigmoid>());
 
     Sequential sequential({784, 15, 10}, std::move(activation_functions));
-    Model model(std::move(sequential), std::make_unique<MSE>(), 0.00001);
+    Model model(std::move(sequential), std::make_unique<MSE>(), 0.0001);
     DataLoader data_loader_train("../train/train-images.idx3-ubyte", "../train/train-labels.idx1-ubyte", 32);
-    model.Train(data_loader_train, 20);
+    model.Train(data_loader_train, 5);
     DataLoader data_loader_test("../test/t10k-images.idx3-ubyte", "../test/t10k-labels.idx1-ubyte", 32);
     int count_right = 0, size = 0;
     Batch m = data_loader_test.Next();

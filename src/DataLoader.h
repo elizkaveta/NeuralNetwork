@@ -20,9 +20,8 @@ using Batch = std::vector<std::pair<Vector, Vector>>;
 class DataLoader {
 public:
     DataLoader(const std::string& path_to_images, const std::string& path_to_labels, size_t batch_size)
-        : path_to_images(path_to_images), path_to_labels(path_to_labels), batch_size(batch_size) {
+        : batch_size(batch_size) {
         file_images = std::ifstream(path_to_images, std::ios::binary);
-
         if (!file_images.is_open()) {
             throw std::runtime_error("Error opening file");
         }
@@ -52,7 +51,6 @@ public:
         if (magic_number_label != 2049) {
             std::cerr << "Неправильный формат меток файла " << path_to_labels << std::endl;
         }
-
         actual_index = 0;
     }
     Batch Next() {
@@ -99,7 +97,7 @@ private:
 
     uint8_t LoadLabel() {
         if (actual_index >= num_images) {
-            std::cerr << "Индекс выходит за пределы диапазона в файле " << path_to_labels << std::endl;
+            std::cerr << "Индекс выходит за пределы диапазона в файле " << std::endl;
             return 0;
         }
         uint8_t label = 0;
@@ -112,12 +110,10 @@ public:
         file_images.close();
         file_labels.close();
     }
-    int num_rows_;
-    int num_cols_;
+    size_t num_rows_;
+    size_t num_cols_;
     std::ifstream file_images;
     std::ifstream file_labels;
-    std::string path_to_images;
-    std::string path_to_labels;
     size_t actual_index = 0;
     size_t num_images;
     size_t batch_size;
