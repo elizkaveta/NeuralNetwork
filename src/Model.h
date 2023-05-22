@@ -61,19 +61,23 @@ public:
         y_[i] = activation_functions[i]->Compute(linear_layers[i].Compute(x));
         return y_[i];
     }
+
     Vector BackPropogate(const Vector& x, size_t i) {
         Vector activ_x = activation_functions[i]->GetDerivative(y_[i]) * x;
         da[i] += activ_x * x_[i].transpose();
         db[i] += activ_x;
         return linear_layers[i].a.transpose() * activ_x;
     }
+
     void Step(double learning_rate, size_t batch_size, size_t i) {
         linear_layers[i].Step(learning_rate, da[i], db[i], batch_size);
     }
+
     void Reset(size_t i) {
         da[i].setZero();
         db[i].setZero();
     }
+
     size_t number_of_layers = 0;
 private:
     std::vector<Matrix> da;
