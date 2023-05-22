@@ -13,17 +13,17 @@ namespace NeuralNetwork {
 using Matrix = Eigen::MatrixXd;
 using Vector = Eigen::VectorXd;
 
-class BaseLossFunction {
+class LossFunction {
 public:
-    virtual double ComputeLoss(const Vector& expected_y,
+    virtual double Compute(const Vector& expected_y,
                                const Vector& predicted_y) = 0;
     virtual Vector GetDerivative(const Vector& expected_y,
                                  const Vector& predicted_y) = 0;
 };
 
-class MSE : public BaseLossFunction {
+class MSE : public LossFunction {
 public:
-    double ComputeLoss(const Vector& y_e,
+    double Compute(const Vector& y_e,
                        const Vector& y_p) final {
         return (y_e - y_p).squaredNorm() / y_e.size();
     }
