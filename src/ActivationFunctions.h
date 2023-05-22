@@ -38,7 +38,7 @@ public:
         return x.cwiseMax(0.0);
     }
     Matrix GetDerivative(const Vector &x) override {
-        return (x.array() > 0.0).cast<double>().matrix().asDiagonal();
+        return (x.array() > 0).cast<double>().matrix().asDiagonal();
     }
 };
 

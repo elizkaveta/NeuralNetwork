@@ -22,7 +22,7 @@ public:
         a = Matrix::Random(n, m);
         b = Vector::Random(n);
     }
-    Vector Compute(const Vector& x) {
+    Vector Compute(const Vector& x) const {
         return a * x + b;
     }
     void Step(double learning_rate, const Matrix& da, const Vector& db, size_t batch_size) {
@@ -96,21 +96,18 @@ public:
         for (size_t i = 0; i < epoch; ++i) {
             printf("epoch: %zu / %zu\n", i + 1, epoch);
             fflush(stdout);
-            Reset();
             Batch batch = data_loader.Next();
-            int cnt = 0;
             while (!batch.empty()) {
+                Reset();
                 Conversion(batch);
                 BackPropogate(batch);
                 batch = data_loader.Next();
-                cnt++;
+                Step(learning_rate / (i + 1), data_loader.batch_size);
             }
-            Step(learning_rate, data_loader.batch_size);
             data_loader.Reset();
         }
     }
-    int Predict(Batch batch) {
-        g = 1;
+    int Predict(Batch batch, std::vector<int>& a) {
         Conversion(batch);
         int count_right = 0;
         for (auto& x_y : batch) {
@@ -122,6 +119,7 @@ public:
                     similar_max = x_y.first[i];
                 }
             }
+            a[ans]++;
             if (DataLoader::ConvertVector(x_y.second) == ans) {
 
                 ++count_right;
@@ -135,11 +133,6 @@ private:
         for (size_t j = 0; j < batch.size(); ++j) {
             for (size_t i = 0; i < sequential.number_of_layers; ++i) {
                 batch[j].first = sequential.Compute(batch[j].first, i);
-//                std::cout << "batch " << j << ":\n";
-//                for (int k = 0; k < batch[j].first.size(); k++) {
-//                    std::cout << batch[j].first[k] << " ";
-//                }
-//                std::cout << std::endl;
             }
         }
     }
