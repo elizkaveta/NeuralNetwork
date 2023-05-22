@@ -47,7 +47,7 @@ public:
     }
 
     Vector Compute(const Vector& x, size_t i) {
-        x_[i] = x.transpose(); //.t
+        x_[i] = x; //.t
         y_[i] = activation_functions[i]->Compute(linear_layers[i].Compute(x));
         return y_[i];
     }
