@@ -25,9 +25,7 @@ public:
 class Sigmoid final : public ActivationFunction {
 public:
     Vector Compute(const Vector &x) override {
-        printf("hui");
-        // return 1 / (1 + (-x.array()).exp());
-        return {};
+        return 1 / (1 + (-x.array()).exp());
     }
     Matrix GetDerivative(const Vector &x) override {
         return ((-x.array()).exp() / pow(1.0 + (-x.array()).exp(), 2)).matrix().asDiagonal();
@@ -37,8 +35,6 @@ public:
 class ReLu final : public ActivationFunction {
 public:
     Vector Compute(const Vector &x) override {
-        printf("hui");
-        return {};
         return x.cwiseMax(0.0);
     }
     Matrix GetDerivative(const Vector &x) override {

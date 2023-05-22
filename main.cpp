@@ -17,11 +17,11 @@ int main() {
     activation_functions.push_back(std::make_unique<ReLu>());
     activation_functions.push_back(std::make_unique<Sigmoid>());
 
-    Sequential sequential({{784, 200}, {200, 50}, {50, 10}}, std::move(activation_functions));
+    Sequential sequential({{200, 784}, {50, 200}, {10, 50}}, std::move(activation_functions));
     Model model(std::move(sequential), std::make_unique<MSE>(), 0.1);
-    DataLoader data_loader_train("../train/train-images.idx3-ubyte", "../train/train-labels.idx1-ubyte", 1);
+    DataLoader data_loader_train("../train/train-images.idx3-ubyte", "../train/train-labels.idx1-ubyte", 32);
     model.Train(data_loader_train);
-    DataLoader data_loader_test("../test/t10k-images.idx3-ubyte", "../test/t10k-labels.idx1-ubyte", 1);
+    DataLoader data_loader_test("../test/t10k-images.idx3-ubyte", "../test/t10k-labels.idx1-ubyte", 32);
     Batch m;
     int count_right = 0, size = 0;
     DataLoader::ConvertVector(data_loader_test.KeyValue(0).second);
@@ -29,7 +29,7 @@ int main() {
         count_right += model.Predict(m);
         size += m.size();
     }
-    std::cout <<DataLoader::ConvertVector(data_loader_test.KeyValue(0).second) << " "<< count_right << " " << size;
+    std::cout << count_right << " " << size;
     return 0;
 
 }

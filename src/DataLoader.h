@@ -28,6 +28,7 @@ public:
         return std::make_pair(FlattenImage(LoadImage(index)), ConvertInt(LoadLabel(index)));
     }
     Batch Next() {
+
         Batch batch(std::min(num_images - actual_index, batch_size));
         for (size_t i = 0; i < batch.size(); ++i) {
             batch[i] = KeyValue(actual_index + i);
@@ -36,6 +37,7 @@ public:
         return batch;
     }
     static Vector ConvertInt(int number) {
+
         Vector y = Vector::Random(10);
         y.setZero();
         y[number] = 1;
@@ -47,6 +49,9 @@ public:
                 return i;
             }
         }
+    }
+    void Reset() {
+        actual_index = 0;
     }
 private:
     Eigen::VectorXd FlattenImage(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& image) {
@@ -124,7 +129,7 @@ public:
     std::string path_to_images;
     std::string path_to_labels;
     size_t actual_index = 0;
-    size_t num_images;
+    size_t num_images = 1000;
     size_t batch_size;
 };
 
