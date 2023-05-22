@@ -74,13 +74,14 @@ public:
         da[i].setZero();
         db[i].setZero();
     }
+    size_t number_of_layers = 0;
+private:
     std::vector<Matrix> da;
     std::vector<Vector> db;
     std::vector<Vector> x_;
     std::vector<Vector> y_;
     std::vector<LinearLayer> linear_layers;
     std::vector<std::unique_ptr<ActivationFunction>> activation_functions;
-    size_t number_of_layers = 0;
 };
 
 class Model {
@@ -92,6 +93,7 @@ public:
             answer[i] = DataLoader::ConvertInt(i);
         }
     }
+
     void Train(DataLoader& data_loader, size_t epoch = 3) {
         for (size_t i = 0; i < epoch; ++i) {
             printf("epoch: %zu / %zu\n", i + 1, epoch);
@@ -107,6 +109,7 @@ public:
             data_loader.Reset();
         }
     }
+
     int Predict(Batch batch, std::vector<int>& a) {
         Conversion(batch);
         int count_right = 0;
@@ -127,7 +130,7 @@ public:
         }
         return count_right;
     }
-    int g = 0;
+
 private:
     void Conversion(Batch& batch) {
         for (size_t j = 0; j < batch.size(); ++j) {
@@ -136,12 +139,13 @@ private:
             }
         }
     }
+
     void BackPropogate(Batch batch) {
         Vector derivative(batch[0].first.size());
         for (auto& x_y : batch) {
             derivative += loss_function->GetDerivative(x_y.first, x_y.second);
         }
-        for (int i = sequential.number_of_layers - 1; i >= 0; --i) {
+        for (int i = static_cast<int>(sequential.number_of_layers) - 1; i >= 0; --i) {
             derivative = sequential.BackPropogate(derivative, i);
         }
     }
@@ -157,6 +161,7 @@ private:
             sequential.Reset(i);
         }
     }
+
     double learning_rate;
     Sequential sequential;
     std::unique_ptr<LossFunction> loss_function;

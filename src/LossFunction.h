@@ -1,7 +1,3 @@
-//
-// Created by Asus on 05.05.2023.
-//
-
 #ifndef NEURALNETWORKS_SRC_LOSSFUNCTION_H_
 #define NEURALNETWORKS_SRC_LOSSFUNCTION_H_
 
@@ -15,21 +11,22 @@ using Vector = Eigen::VectorXd;
 
 class LossFunction {
 public:
-    virtual double Compute(const Vector& expected_y,
-                               const Vector& predicted_y) = 0;
-    virtual Vector GetDerivative(const Vector& expected_y,
-                                 const Vector& predicted_y) = 0;
+    virtual double Compute(const Vector& expected,
+                               const Vector& predicted) = 0;
+    virtual Vector GetDerivative(const Vector& expected,
+                                 const Vector& predicted) = 0;
 };
 
 class MSE : public LossFunction {
 public:
-    double Compute(const Vector& y_e,
-                       const Vector& y_p) final {
-        return (y_e - y_p).squaredNorm() / y_e.size();
+    double Compute(const Vector& expected,
+                       const Vector& predicted) final {
+        return (expected - predicted).squaredNorm() / expected.size();
     }
-    Vector GetDerivative(const Vector& y_e,
-                         const Vector& y_p) final {
-        return 2 * (y_p - y_e);
+    Vector GetDerivative(const Vector& expected,
+                         const Vector& predicted) final {
+        return 2 * (predicted - expected);
     }
 };
-}
+
+} // namespace NeuralNetwork
