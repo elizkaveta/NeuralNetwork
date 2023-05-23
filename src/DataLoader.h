@@ -19,27 +19,30 @@ public:
     DataLoader(const std::string& path_to_images, const std::string& path_to_labels, size_t batch_size)
         : batch_size(batch_size) {
         file_images = std::ifstream(path_to_images, std::ios::binary);
+
         if (!file_images.is_open()) {
             throw std::runtime_error("Ошибка при открытии файла");
         }
-        uint32_t magic_number, num_rows, num_cols;
-        file_images.read(reinterpret_cast<char*>(&magic_number), 4);
-        file_images.read(reinterpret_cast<char*>(&num_images), 4);
-        file_images.read(reinterpret_cast<char*>(&num_rows), 4);
-        file_images.read(reinterpret_cast<char*>(&num_cols), 4);
 
-        magic_number = __builtin_bswap32(magic_number);
+        uint32_t magic_number_image, num_rows, num_cols;
+        file_images.read(reinterpret_cast<char*>(&magic_number_image), POINTER);
+        file_images.read(reinterpret_cast<char*>(&num_images), POINTER);
+        file_images.read(reinterpret_cast<char*>(&num_rows), POINTER);
+        file_images.read(reinterpret_cast<char*>(&num_cols), POINTER);
+
+        magic_number_image = __builtin_bswap32(magic_number_image);
         num_images = __builtin_bswap32(num_images);
         num_rows = __builtin_bswap32(num_rows);
         num_cols = __builtin_bswap32(num_cols);
 
         size_of_picture = num_cols * num_rows;
+
         if (size_of_picture != IMAGE_SIZE) {
             std::cerr << "Неправильный формат файла " << path_to_labels << std::endl;
         }
 
-        if (magic_number != 0x00000803) {
-            throw std::runtime_error("Invalid file format");
+        if (magic_number_image != MAGIC_NUMBER_IMAGE) {
+            throw std::runtime_error("Неправильный формат файла");
         }
 
         file_labels = std::ifstream(path_to_labels, std::ios::binary);
@@ -48,11 +51,11 @@ public:
         }
 
         uint32_t magic_number_label = 0, num_items = 0;
-        file_labels.read(reinterpret_cast<char*>(&magic_number_label), 4);
-        file_labels.read(reinterpret_cast<char*>(&num_items), 4);
+        file_labels.read(reinterpret_cast<char*>(&magic_number_label), POINTER);
+        file_labels.read(reinterpret_cast<char*>(&num_items), POINTER);
         magic_number_label = __builtin_bswap32(magic_number_label);
 
-        if (magic_number_label != 2049) {
+        if (magic_number_label != MAGIC_NUMBER_LABEL) {
             std::cerr << "Неправильный формат меток файла " << path_to_labels << std::endl;
         }
         actual_index = 0;
@@ -72,7 +75,7 @@ public:
     }
 
     static Vector ConvertInt(int number) {
-        Vector y = Eigen::Vector<double, 10>();
+        Vector y = Eigen::Vector<double, COUNT_OF_DIGITS>();
         y.setZero();
         y[number] = 1;
         return y;
@@ -80,7 +83,7 @@ public:
 
     static int ConvertVector(const Vector& y) {
         int index = 0;
-        for (int i = 0; i < 10; ++i) {
+        for (int i = 0; i < COUNT_OF_DIGITS; ++i) {
             if (y[i] > y[index]) {
                 index = i;
             }
@@ -90,15 +93,19 @@ public:
 
     void Reset() {
         actual_index = 0;
-        file_images.seekg(16, std::ios_base::beg);
-        file_labels.seekg(8, std::ios::beg);
+        file_images.seekg(4 * POINTER, std::ios_base::beg); // первые 4 числа файла заняты параметрами
+        file_labels.seekg(2 * POINTER, std::ios::beg); // первые 2 числа файла заняты параметрами
     }
 
     size_t batch_size;
 
 private:
+    static const size_t POINTER = 4;
     static const size_t IMAGE_SIZE = 784;
     constexpr static const double PIXEL_MAX = 255.0;
+    static const int MAGIC_NUMBER_IMAGE = 0x00000803;
+    static const int MAGIC_NUMBER_LABEL = 2049;
+    static const int COUNT_OF_DIGITS = 10;
 
     Eigen::Vector<double, IMAGE_SIZE> LoadImage() {
         if (actual_index < 0 || actual_index >= num_images) {
@@ -129,7 +136,7 @@ private:
     std::ifstream file_images;
     std::ifstream file_labels;
     size_t actual_index = 0;
-    size_t num_images;
+    uint32_t num_images;
 };
 
 } // namespace NeuralNetwork

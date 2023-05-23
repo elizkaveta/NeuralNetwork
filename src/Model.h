@@ -55,7 +55,6 @@ public:
                std::vector<std::unique_ptr<ActivationFunction>> activation_functions_t)
         : activation_functions(std::move(activation_functions_t)) {
         assert((dimensions.size() == activation_functions.size() + 1));
-
         linear_layers.reserve(activation_functions.size());
 
         for (auto it = dimensions.begin(); it + 1 != dimensions.end(); ++it) {
@@ -111,8 +110,9 @@ class Model {
 public:
     Model(Sequential seq, std::unique_ptr<LossFunction> loss_function_t, double learning_rate)
         : sequential(std::move(seq)), loss_function(std::move(loss_function_t)), learning_rate(learning_rate) {
-        answer.resize(10);
-        for (int i = 0; i < 10; ++i) {
+
+        answer.resize(COUNT_OF_DIGITS);
+        for (int i = 0; i < COUNT_OF_DIGITS; ++i) {
             answer[i] = DataLoader::ConvertInt(i);
         }
     }
@@ -127,13 +127,13 @@ public:
                 Reset();
                 Conversion(batch);
                 BackPropogate(batch);
+                Step(learning_rate / (data_loader.batch_size * (i + 1.)) );
                 data_loader.Next(batch);
-                Step(learning_rate / data_loader.batch_size / (i + 1));
             }
             data_loader.Reset();
-            auto answer = Predict(data_loader);
-            printf("accuracy train: %f\n", answer.first * 1.0/answer.second);
-            answer = Predict(data_loader_test);
+            //auto answer = Predict(data_loader);
+            //printf("accuracy train: %f\n", answer.first * 1.0/answer.second);
+            auto answer = Predict(data_loader_test);
             printf("accuracy test: %f\n", answer.first * 1.0/answer.second);
         }
     }
@@ -193,6 +193,7 @@ private:
     Sequential sequential;
     std::unique_ptr<LossFunction> loss_function;
     std::vector<Vector> answer;
+    static const int COUNT_OF_DIGITS = 10;
 };
 
 }
