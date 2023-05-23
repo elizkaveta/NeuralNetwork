@@ -38,31 +38,21 @@ public:
         return x.cwiseMax(0.0);
     }
     Matrix GetDerivative(const Vector &x) override {
-        return (x.array() > 0).cast<double>().matrix().asDiagonal();
+        return (x.array() > 0.0).cast<double>().matrix().asDiagonal();
     }
 };
 
 class Softmax : public ActivationFunction {
 public:
     Vector Compute(const Vector &x) override {
-        return (x.array().exp() / x.array().exp().sum()).matrix();
+        auto result = x.array().exp();
+        return result / result.sum();
     }
 
     Matrix GetDerivative(const Vector &x) override {
-        size_t n = x.rows();
-        Matrix ans(n, n);
-        Vector compute = Compute(x);
-        for (size_t i = 0; i < n; ++i) {
-            for (size_t j = 0; j < n; ++j) {
-                if (i == j) {
-                    ans(i, j) = compute(i) * (1 - compute(j));
-                } else {
-                    ans(i, j) = -compute(i) * compute(j);
-                }
-            }
-        }
-
-        return ans;
+        Vector computeSoftmax = Compute(x);
+        Matrix diagonal = computeSoftmax.asDiagonal();
+        return diagonal - computeSoftmax * computeSoftmax.transpose();
     }
 };
 

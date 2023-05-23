@@ -66,8 +66,11 @@ public:
 
     Batch Next() {
         Batch batch(std::min(num_images - actual_index, batch_size));
-        for (auto & i : batch) {
-            i = std::make_pair(LoadImage(), ConvertInt(LoadLabel()));
+        for (int i = 0; i < batch.size(); ++i) {
+            batch[i] = std::make_pair(LoadImage(), ConvertInt(LoadLabel()));
+            if (i && batch[i].first == batch[i - 1].first) {
+                std::cout << "Wow\n";
+            }
             actual_index++;
         }
         return batch;
@@ -81,11 +84,13 @@ public:
     }
 
     static int ConvertVector(const Vector& y) {
+        int index = 0;
         for (int i = 0; i < 10; ++i) {
-            if (fabs(y[i] - 1) < 1e-6) {
-                return i;
+            if (y[i] > y[index]) {
+                index = i;
             }
         }
+        return index;
     }
 
     void Reset() {
