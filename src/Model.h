@@ -33,8 +33,7 @@ void PrintMat(const Matrix& x) {
     std::cout << std::endl;
 }
 
-class LinearLayer {
-public:
+struct LinearLayer {
     Matrix a;
     Vector b;
     LinearLayer(size_t n, size_t m) {
@@ -99,7 +98,7 @@ public:
     }
 
     size_t number_of_layers = 0;
-public:
+private:
     std::vector<Matrix> da;
     std::vector<Vector> db;
     std::vector<Vector> x_saved;
@@ -159,7 +158,7 @@ public:
         return std::make_pair(count_right_answers, count_all_images);
     }
 
-public:
+private:
     void Conversion(Batch& batch) {
         for (auto& x_y : batch) {
             for (size_t i = 0; i < sequential.number_of_layers; ++i) {
