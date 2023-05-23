@@ -1,7 +1,3 @@
-//
-// Created by Elizaveta Iashchinskaia on 22.05.2023.
-//
-
 #ifndef NEURALNETWORK_SRC_DATALOADER_H_
 #define NEURALNETWORK_SRC_DATALOADER_H_
 
@@ -64,16 +60,12 @@ public:
         file_labels.close();
     }
 
-    Batch Next() {
-        Batch batch(std::min(num_images - actual_index, batch_size));
+    void Next(Batch& batch) {
+        batch.resize(std::min(num_images - actual_index, batch_size));
         for (int i = 0; i < batch.size(); ++i) {
             batch[i] = std::make_pair(LoadImage(), ConvertInt(LoadLabel()));
-            if (i && batch[i].first == batch[i - 1].first) {
-                std::cout << "Wow\n";
-            }
             actual_index++;
         }
-        return batch;
     }
 
     static Vector ConvertInt(int number) {
@@ -135,4 +127,5 @@ private:
 };
 
 } // namespace NeuralNetwork
+
 #endif //NEURALNETWORK_SRC_DATALOADER_H_

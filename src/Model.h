@@ -70,19 +70,19 @@ public:
             db[i] = linear_layers[i].b;
         }
         Reset();
-        x_.resize(number_of_layers);
-        y_.resize(number_of_layers);
+        x_saved.resize(number_of_layers);
+        y_saved.resize(number_of_layers);
     }
 
     Vector Compute(const Vector& x, size_t i) {
-        x_[i] = x;
-        y_[i] = activation_functions[i]->Compute(linear_layers[i].Compute(x));
-        return y_[i];
+        x_saved[i] = x;
+        y_saved[i] = activation_functions[i]->Compute(linear_layers[i].Compute(x));
+        return y_saved[i];
     }
 
     Vector BackPropogate(const Vector& x, size_t i) {
-        Vector activ_x = activation_functions[i]->GetDerivative(y_[i]) * x;
-        da[i] += activ_x * x_[i].transpose();
+        Vector activ_x = activation_functions[i]->GetDerivative(y_saved[i]) * x;
+        da[i] += activ_x * x_saved[i].transpose();
         db[i] += activ_x;
         return linear_layers[i].a.transpose() * activ_x;
     }
@@ -102,8 +102,8 @@ public:
 public:
     std::vector<Matrix> da;
     std::vector<Vector> db;
-    std::vector<Vector> x_;
-    std::vector<Vector> y_;
+    std::vector<Vector> x_saved;
+    std::vector<Vector> y_saved;
     std::vector<LinearLayer> linear_layers;
     std::vector<std::unique_ptr<ActivationFunction>> activation_functions;
 };
@@ -118,28 +118,33 @@ public:
         }
     }
 
-    void Train(DataLoader& data_loader, size_t epoch = 3) {
+    void Train(DataLoader& data_loader, DataLoader& data_loader_test, size_t epoch = 10) {
+        Batch batch;
         for (size_t i = 0; i < epoch; ++i) {
-            printf("epoch: %zu / %zu\n", i + 1, epoch);
+            printf("\nepoch: %zu / %zu\n", i + 1, epoch);
             fflush(stdout);
-            Batch batch = data_loader.Next();
+            data_loader.Next(batch);
             while (!batch.empty()) {
                 Reset();
                 Conversion(batch);
                 BackPropogate(batch);
-                batch = data_loader.Next();
+                data_loader.Next(batch);
                 Step(learning_rate / data_loader.batch_size / (i + 1));
             }
             data_loader.Reset();
+            auto answer = Predict(data_loader);
+            printf("accuracy train: %f\n", answer.first * 1.0/answer.second);
+            answer = Predict(data_loader_test);
+            printf("accuracy test: %f\n", answer.first * 1.0/answer.second);
         }
-        auto answer = Predict(data_loader);
-        printf("\n", answer.first, answer.second);
     }
 
-    std::pair<size_t, size_t> Predict(DataLoader& data_loader_test) {
+    std::pair<size_t, size_t> Predict(DataLoader& data_loader) {
+        data_loader.Reset();
         size_t count_right_answers = 0;
         size_t count_all_images = 0;
-        Batch batch = data_loader_test.Next();
+        Batch batch;
+        data_loader.Next(batch);
         while (!batch.empty()) {
             Conversion(batch);
             for (auto& x_y : batch) {
@@ -147,16 +152,18 @@ public:
                     ++count_right_answers;
                 }
             }
-            batch = data_loader_test.Next();
+            count_all_images += batch.size();
+            data_loader.Next(batch);
         }
+        data_loader.Reset();
         return std::make_pair(count_right_answers, count_all_images);
     }
 
 public:
     void Conversion(Batch& batch) {
-        for (size_t j = 0; j < batch.size(); ++j) {
+        for (auto& x_y : batch) {
             for (size_t i = 0; i < sequential.number_of_layers; ++i) {
-                batch[j].first = sequential.Compute(batch[j].first, i);
+                x_y.first = sequential.Compute(x_y.first, i);
             }
         }
     }
