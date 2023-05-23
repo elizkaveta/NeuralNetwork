@@ -20,7 +20,7 @@ public:
         : batch_size(batch_size) {
         file_images = std::ifstream(path_to_images, std::ios::binary);
         if (!file_images.is_open()) {
-            throw std::runtime_error("Error opening file");
+            throw std::runtime_error("Ошибка при открытии файла");
         }
         uint32_t magic_number, num_rows, num_cols;
         file_images.read(reinterpret_cast<char*>(&magic_number), 4);
@@ -34,6 +34,9 @@ public:
         num_cols = __builtin_bswap32(num_cols);
 
         size_of_picture = num_cols * num_rows;
+        if (size_of_picture != IMAGE_SIZE) {
+            std::cerr << "Неправильный формат файла " << path_to_labels << std::endl;
+        }
 
         if (magic_number != 0x00000803) {
             throw std::runtime_error("Invalid file format");
@@ -94,17 +97,20 @@ public:
     size_t batch_size;
 
 private:
-    Eigen::Vector<double, 784> LoadImage() {
+    static const size_t IMAGE_SIZE = 784;
+    constexpr static const double PIXEL_MAX = 255.0;
+
+    Eigen::Vector<double, IMAGE_SIZE> LoadImage() {
         if (actual_index < 0 || actual_index >= num_images) {
             throw std::runtime_error("Индекс выходит за пределы диапазона");
         }
-        Eigen::Vector<double, 784> result;
+        Eigen::Vector<double, IMAGE_SIZE> result;
         int cnt = 0;
         for (int i = 0; i < size_of_picture; i++) {
             unsigned char temp = 0;
             file_images.read((char *)&temp, sizeof(temp));
             cnt += temp;
-            result(i) = (double)temp / 255.0;
+            result(i) = (double)temp / PIXEL_MAX;
         }
         return result;
     }
