@@ -16,6 +16,7 @@ using Batch = std::vector<std::pair<Vector, Vector>>;
 
 class DataLoader {
 public:
+
     DataLoader(const std::string& path_to_images, const std::string& path_to_labels, size_t batch_size)
         : batch_size(batch_size) {
         file_images = std::ifstream(path_to_images, std::ios::binary);
@@ -66,6 +67,11 @@ public:
         file_labels.close();
     }
 
+    static const size_t IMAGE_SIZE = 784;
+    static const int COUNT_OF_DIGITS = 10;
+
+private:
+    friend class Model;
     void Next(Batch& batch) {
         batch.resize(std::min(num_images - actual_index, batch_size));
         for (int i = 0; i < batch.size(); ++i) {
@@ -97,27 +103,17 @@ public:
         file_labels.seekg(2 * POINTER, std::ios::beg); // первые 2 числа файла заняты параметрами
     }
 
-    size_t batch_size;
-
-private:
-    static const size_t POINTER = 4;
-    static const size_t IMAGE_SIZE = 784;
-    constexpr static const double PIXEL_MAX = 255.0;
-    static const int MAGIC_NUMBER_IMAGE = 0x00000803;
-    static const int MAGIC_NUMBER_LABEL = 2049;
-    static const int COUNT_OF_DIGITS = 10;
-
     Eigen::Vector<double, IMAGE_SIZE> LoadImage() {
         if (actual_index < 0 || actual_index >= num_images) {
             throw std::runtime_error("Индекс выходит за пределы диапазона");
         }
+
         Eigen::Vector<double, IMAGE_SIZE> result;
-        int cnt = 0;
         for (int i = 0; i < size_of_picture; i++) {
             unsigned char temp = 0;
             file_images.read((char *)&temp, sizeof(temp));
-            cnt += temp;
-            result(i) = (double)temp / PIXEL_MAX;
+            //result(i) = std::max(std::min(((double)temp  - PIXEL_MAX / 2) * 3 + PIXEL_MAX / 2, PIXEL_MAX), 0.0) / PIXEL_MAX;
+            result(i) = temp / PIXEL_MAX;
         }
         return result;
     }
@@ -132,6 +128,12 @@ private:
         return label;
     }
 
+    const size_t POINTER = 4;
+    const double PIXEL_MAX = 255.0;
+    const int MAGIC_NUMBER_IMAGE = 0x00000803;
+    const int MAGIC_NUMBER_LABEL = 2049;
+
+    size_t batch_size;
     size_t size_of_picture;
     std::ifstream file_images;
     std::ifstream file_labels;

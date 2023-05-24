@@ -14,32 +14,16 @@
 
 namespace NeuralNetwork {
 
-void PrintVec(const Vector& x) {
-    for (int i = 0; i < x.rows(); ++i) {
-        std::cout << x(i) << " ";
-    }
-    std::cout << std::endl;
-    std::cout << std::endl;
-}
-
-void PrintMat(const Matrix& x) {
-    for (int i = 0; i < x.rows(); ++i) {
-        for (int j = 0; j < x.cols(); ++j) {
-            std::cout << x(i, j) << " ";
-        }
-        std::cout << std::endl;
-    }
-    std::cout << std::endl;
-    std::cout << std::endl;
-}
-
-struct LinearLayer {
-    Matrix a;
-    Vector b;
+class LinearLayer {
+public:
     LinearLayer(size_t n, size_t m) {
         a = Matrix::Random(n, m);
         b = Vector::Random(n);
     }
+    Matrix a;
+    Vector b;
+private:
+    friend class Sequential;
     [[nodiscard]] Vector Compute(const Vector& x) const {
         return a * x + b;
     }
@@ -55,8 +39,9 @@ public:
                std::vector<std::unique_ptr<ActivationFunction>> activation_functions_t)
         : activation_functions(std::move(activation_functions_t)) {
         assert((dimensions.size() == activation_functions.size() + 1));
+        assert(!activation_functions.empty());
+        assert(*dimensions.begin() == DataLoader::IMAGE_SIZE);
         linear_layers.reserve(activation_functions.size());
-
         for (auto it = dimensions.begin(); it + 1 != dimensions.end(); ++it) {
             linear_layers.emplace_back(*(it + 1), *(it));
         }
@@ -71,22 +56,27 @@ public:
         x_saved.resize(number_of_layers);
         y_saved.resize(number_of_layers);
     }
-
+private:
+    friend class Model;
     Vector Compute(const Vector& x, size_t i) {
         x_saved[i] = x;
         y_saved[i] = activation_functions[i]->Compute(linear_layers[i].Compute(x));
         return y_saved[i];
     }
 
-    Vector BackPropogate(const Vector& x, size_t i) {
-        Vector activ_x = activation_functions[i]->GetDerivative(y_saved[i]) * x;
-        da[i] += activ_x * x_saved[i].transpose();
-        db[i] += activ_x;
-        return linear_layers[i].a.transpose() * activ_x;
+    void BackPropogate(Vector& x) {
+        for (int i = static_cast<int>(number_of_layers) - 1; i >= 0; --i) {
+            Vector activ_x = activation_functions[i]->GetDerivative(y_saved[i]) * x;
+            da[i] += activ_x * x_saved[i].transpose();
+            db[i] += activ_x;
+            x = linear_layers[i].a.transpose() * activ_x;
+        }
     }
 
-    void Step(double learning_rate, size_t i) {
-        linear_layers[i].Step(learning_rate, da[i], db[i]);
+    void Step(double learning_rate) {
+        for (size_t i = 0; i < number_of_layers; ++i) {
+            linear_layers[i].Step(learning_rate, da[i], db[i]);
+        }
     }
 
     void Reset() {
@@ -97,7 +87,6 @@ public:
     }
 
     size_t number_of_layers = 0;
-private:
     std::vector<Matrix> da;
     std::vector<Vector> db;
     std::vector<Vector> x_saved;
@@ -111,30 +100,30 @@ public:
     Model(Sequential seq, std::unique_ptr<LossFunction> loss_function_t, double learning_rate)
         : sequential(std::move(seq)), loss_function(std::move(loss_function_t)), learning_rate(learning_rate) {
 
-        answer.resize(COUNT_OF_DIGITS);
-        for (int i = 0; i < COUNT_OF_DIGITS; ++i) {
+        answer.resize(DataLoader:: COUNT_OF_DIGITS);
+        for (int i = 0; i < DataLoader::COUNT_OF_DIGITS; ++i) {
             answer[i] = DataLoader::ConvertInt(i);
         }
     }
 
     void Train(DataLoader& data_loader, DataLoader& data_loader_test, size_t epoch = 10) {
+        data_loader.Reset();
+        data_loader_test.Reset();
         Batch batch;
         for (size_t i = 0; i < epoch; ++i) {
             printf("\nepoch: %zu / %zu\n", i + 1, epoch);
             fflush(stdout);
             data_loader.Next(batch);
             while (!batch.empty()) {
-                Reset();
+                sequential.Reset();
                 Conversion(batch);
                 BackPropogate(batch);
-                Step(learning_rate / (data_loader.batch_size * (i + 1.)) );
+                sequential.Step(learning_rate / (data_loader.batch_size * (i / 3 + 1.)) );
                 data_loader.Next(batch);
             }
             data_loader.Reset();
-            //auto answer = Predict(data_loader);
-            //printf("accuracy train: %f\n", answer.first * 1.0/answer.second);
-            auto answer = Predict(data_loader_test);
-            printf("accuracy test: %f\n", answer.first * 1.0/answer.second);
+            auto predict = Predict(data_loader_test);
+            printf("accuracy test: %f\n", predict.first * 1.0/predict.second);
         }
     }
 
@@ -167,33 +156,19 @@ private:
         }
     }
 
-    void BackPropogate(Batch batch) {
+    void BackPropogate(const Batch& batch) {
         Vector derivative(batch[0].first.size());
         derivative.setZero();
         for (auto& x_y : batch) {
             derivative += loss_function->GetDerivative(x_y.second, x_y.first);
         }
-
-        for (int i = static_cast<int>(sequential.number_of_layers) - 1; i >= 0; --i) {
-            derivative = sequential.BackPropogate(derivative, i);
-        }
-    }
-
-    void Step(double lr) {
-        for (size_t i = 0; i < sequential.number_of_layers; ++i) {
-            sequential.Step(lr, i);
-        }
-    }
-
-    void Reset() {
-        sequential.Reset();
+        sequential.BackPropogate(derivative);
     }
 
     double learning_rate;
     Sequential sequential;
     std::unique_ptr<LossFunction> loss_function;
     std::vector<Vector> answer;
-    static const int COUNT_OF_DIGITS = 10;
 };
 
 }

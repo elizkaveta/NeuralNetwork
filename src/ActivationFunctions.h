@@ -17,13 +17,12 @@ using Matrix = Eigen::MatrixXd;
 using Vector = Eigen::VectorXd;
 
 class ActivationFunction {
-public:
     virtual Vector Compute(const Vector &x) = 0;
     virtual Matrix GetDerivative(const Vector &x) = 0;
+    friend class Sequential;
 };
 
 class Sigmoid final : public ActivationFunction {
-public:
     Vector Compute(const Vector &x) override {
         return 1 / (1 + (-x.array()).exp());
     }
@@ -33,7 +32,6 @@ public:
 };
 
 class ReLu final : public ActivationFunction {
-public:
     Vector Compute(const Vector &x) override {
         return x.cwiseMax(0.0);
     }
