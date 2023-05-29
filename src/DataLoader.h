@@ -115,8 +115,8 @@ class DataLoader {
     for (int i = 0; i < size_of_picture; i++) {
       unsigned char temp = 0;
       file_images.read((char *) &temp, sizeof(temp));
-      //result(i) = std::max(std::min(((double)temp  - PIXEL_MAX / 2) * 3 + PIXEL_MAX / 2, PIXEL_MAX), 0.0) / PIXEL_MAX;
-      result(i) = temp / PIXEL_MAX;
+      result(i) = std::max(std::min(((double)temp  - PIXEL_MAX / 2) * 1.2 + PIXEL_MAX / 2, PIXEL_MAX), 0.0) / PIXEL_MAX;
+      // result(i) = temp / PIXEL_MAX;
     }
     return result;
   }
