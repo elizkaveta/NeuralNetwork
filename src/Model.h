@@ -190,12 +190,12 @@ public:
                 sequential.Reset();
                 Conversion(batch);
                 BackPropogate(batch);
-                sequential.Step(learning_rate / (data_loader.batch_size * (i / 3 + 1.)));
+                sequential.Step(learning_rate / static_cast<double>(data_loader.batch_size) * (i / 3 + 1.)));
                 data_loader.Next(batch);
             }
             data_loader.Reset();
             auto predict = Predict(data_loader_test);
-            std::cout << predict.first * 1.0 / predict.second << "\n";
+            std::cout << static_cast<double>(predict.first) * 1.0 / static_cast<double>(predict.second) << "\n";
         }
     }
 

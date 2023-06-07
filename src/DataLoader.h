@@ -75,8 +75,8 @@ private:
     friend class Model;
     void Next(Batch &batch) {
         batch.resize(std::min(num_images - actual_index, batch_size));
-        for (int i = 0; i < batch.size(); ++i) {
-            batch[i] = std::make_pair(LoadImage(), ConvertInt(LoadLabel()));
+        for (auto & i : batch) {
+            i = std::make_pair(LoadImage(), ConvertInt(LoadLabel()));
             actual_index++;
         }
     }

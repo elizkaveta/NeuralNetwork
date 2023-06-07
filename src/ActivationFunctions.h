@@ -20,7 +20,9 @@ public:
     friend class Model;
 private:
     virtual Vector Compute(const Vector &x) = 0;
+
     virtual Matrix GetDerivative(const Vector &x) = 0;
+
     virtual std::string GetType() = 0;
 };
 
@@ -32,9 +34,11 @@ private:
     Vector Compute(const Vector &x) override {
         return 1 / (1 + (-x.array()).exp());
     }
+
     Matrix GetDerivative(const Vector &x) override {
         return ((-x.array()).exp() / pow(1.0 + (-x.array()).exp(), 2)).matrix().asDiagonal();
     }
+
     std::string GetType() override {
         return "Sigmoid";
     }
@@ -45,9 +49,11 @@ private:
     Vector Compute(const Vector &x) override {
         return x.cwiseMax(0.0);
     }
+
     Matrix GetDerivative(const Vector &x) override {
         return (x.array() > 0.0).cast<double>().matrix().asDiagonal();
     }
+
     std::string GetType() override {
         return "ReLu";
     }
@@ -65,6 +71,7 @@ private:
         Matrix diagonal = computeSoftmax.asDiagonal();
         return diagonal - computeSoftmax * computeSoftmax.transpose();
     }
+
     std::string GetType() override {
         return "Softmax";
     }
