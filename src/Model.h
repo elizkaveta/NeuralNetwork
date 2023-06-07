@@ -77,7 +77,7 @@ private:
 class Sequential {
 public:
     Sequential(std::initializer_list<size_t> dimensions,
-               std::vector<std::unique_ptr<ActivationFunction>> activation_functions_t)
+               std::vector<std::unique_ptr<ActivationFunction>> &&activation_functions_t)
         : activation_functions(std::move(activation_functions_t)) {
         assert((dimensions.size() == activation_functions.size() + 1));
         assert(!activation_functions.empty());
@@ -102,7 +102,7 @@ public:
     }
 
     Sequential(std::vector<LinearLayer> linear_layers_t,
-               std::vector<std::unique_ptr<ActivationFunction>> activation_functions_t)
+               std::vector<std::unique_ptr<ActivationFunction>> &&activation_functions_t)
         : linear_layers(std::move(linear_layers_t)), activation_functions(std::move(activation_functions_t)) {
         number_of_layers = activation_functions.size();
         da.resize(number_of_layers);
@@ -178,22 +178,22 @@ public:
         }
     }
 
-    void Train(DataLoader&& data_loader, DataLoader&& data_loader_test, size_t epoch) {
-        data_loader.Reset();
+    void Train(DataLoader data_loader_train, DataLoader data_loader_test, size_t epoch) {
+        data_loader_train.Reset();
         data_loader_test.Reset();
         Batch batch;
         for (size_t i = 0; i < epoch; ++i) {
             printf("\nepoch: %zu / %zu\n", i + 1, epoch);
             fflush(stdout);
-            data_loader.Next(batch);
+            data_loader_train.Next(batch);
             while (!batch.empty()) {
                 sequential.Reset();
                 Conversion(batch);
                 BackPropogate(batch);
-                sequential.Step(learning_rate / static_cast<double>(data_loader.batch_size) * (i / 3 + 1.)));
-                data_loader.Next(batch);
+                sequential.Step(learning_rate / static_cast<double>(data_loader_train.batch_size) * (i / 3 + 1.));
+                data_loader_train.Next(batch);
             }
-            data_loader.Reset();
+            data_loader_train.Reset();
             auto predict = Predict(data_loader_test);
             std::cout << static_cast<double>(predict.first) * 1.0 / static_cast<double>(predict.second) << "\n";
         }
