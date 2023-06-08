@@ -2,7 +2,6 @@
 #define NEURALNETWORK_SRC_LOSSFUNCTION_H_
 
 #endif //NEURALNETWORK_SRC_LOSSFUNCTION_H_
-
 #include "../eigen/Eigen/Dense"
 
 namespace NeuralNetwork {
@@ -13,33 +12,25 @@ using Vector = Eigen::VectorXd;
 class LossFunction {
 public:
     friend class Model;
-
-    virtual ~LossFunction() = default;
 private:
-    virtual double Compute(const Vector &expected,
-                           const Vector &predicted) = 0;
+    [[nodiscard]] virtual double Compute(const Vector &expected,
+                           const Vector &predicted) const = 0;
 
-    virtual Vector GetDerivative(const Vector &expected,
-                                 const Vector &predicted) = 0;
+    [[nodiscard]] virtual Vector GetDerivative(const Vector &expected,
+                                 const Vector &predicted) const = 0;
 
-    virtual std::string GetType() = 0;
+    [[nodiscard]] virtual std::string GetType() const = 0;
 };
 
-class MSE : public LossFunction {
+class MSE final : public LossFunction {
 private:
-    double Compute(const Vector &expected,
-                   const Vector &predicted) final {
-        return (expected - predicted).squaredNorm() / expected.size();
-    }
+    [[nodiscard]] double Compute(const Vector &expected,
+                   const Vector &predicted) const final;
 
-    Vector GetDerivative(const Vector &expected,
-                         const Vector &predicted) final {
-        return 2 * (predicted - expected);
-    }
+    [[nodiscard]] Vector GetDerivative(const Vector &expected,
+                         const Vector &predicted) const final;
 
-    std::string GetType() override {
-        return "MSE";
-    }
+    [[nodiscard]] std::string GetType() const final;
 };
 
 } // namespace NeuralNetwork

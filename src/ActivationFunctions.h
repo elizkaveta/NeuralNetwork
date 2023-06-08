@@ -19,60 +19,51 @@ public:
     friend class Sequential;
     friend class Model;
 private:
-    virtual Vector Compute(const Vector &x) = 0;
+    [[nodiscard]] virtual Vector Compute(const Vector &x) const = 0;
 
-    virtual Matrix GetDerivative(const Vector &x) = 0;
+    [[nodiscard]] virtual Matrix GetDerivative(const Vector &x) const = 0;
 
-    virtual std::string GetType() = 0;
+    [[nodiscard]] virtual std::string GetType() const = 0;
 };
 
 class Sigmoid final : public ActivationFunction {
-public:
-    friend class Sequential;
-    friend class Model;
 private:
-    Vector Compute(const Vector &x) override {
-        return 1 / (1 + (-x.array()).exp());
-    }
+    [[nodiscard]] Vector Compute(const Vector &x) const final;
 
-    Matrix GetDerivative(const Vector &x) override {
-        return ((-x.array()).exp() / pow(1.0 + (-x.array()).exp(), 2)).matrix().asDiagonal();
-    }
+    [[nodiscard]] Matrix GetDerivative(const Vector &x) const final;
 
-    std::string GetType() override {
-        return "Sigmoid";
-    }
+    [[nodiscard]] std::string GetType() const final;
 };
 
 class ReLu final : public ActivationFunction {
 private:
-    Vector Compute(const Vector &x) override {
+    [[nodiscard]] Vector Compute(const Vector &x) const final {
         return x.cwiseMax(0.0);
     }
 
-    Matrix GetDerivative(const Vector &x) override {
+    [[nodiscard]] Matrix GetDerivative(const Vector &x) const final {
         return (x.array() > 0.0).cast<double>().matrix().asDiagonal();
     }
 
-    std::string GetType() override {
+    [[nodiscard]] std::string GetType() const final {
         return "ReLu";
     }
 };
 
 class Softmax : public ActivationFunction {
 private:
-    Vector Compute(const Vector &x) override {
+    [[nodiscard]] Vector Compute(const Vector &x) const final {
         auto result = x.array().exp();
         return result / result.sum();
     }
 
-    Matrix GetDerivative(const Vector &x) override {
+    [[nodiscard]] Matrix GetDerivative(const Vector &x) const final {
         Vector computeSoftmax = Compute(x);
         Matrix diagonal = computeSoftmax.asDiagonal();
         return diagonal - computeSoftmax * computeSoftmax.transpose();
     }
 
-    std::string GetType() override {
+    [[nodiscard]] std::string GetType() const final {
         return "Softmax";
     }
 };
