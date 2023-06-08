@@ -50,6 +50,8 @@ public:
 
     [[nodiscard]] Vector Compute(const Vector &x) const;
 
+    friend class Sequential;
+private:
     void Step(double learning_rate, const Matrix &da, const Vector &db);
 
 
